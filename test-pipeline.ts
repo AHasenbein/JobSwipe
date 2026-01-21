@@ -13,8 +13,15 @@ import { Candidate, Job } from './src/types'
 async function testDatabase() {
   console.log('🧪 Testing MongoDB Connection...\n')
   
+  const uri = process.env.MONGODB_URI
+  if (!uri) {
+    console.error('❌ MONGODB_URI environment variable is required')
+    console.error('   Please set MONGODB_URI in your .env.local file or environment')
+    console.error('   Example: MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/database')
+    process.exit(1)
+  }
+  
   // Show connection info (without password)
-  const uri = process.env.MONGODB_URI || ''
   console.log(`📡 Connection: ${uri.replace(/:[^:@]+@/, ':***@')}\n`)
 
   try {

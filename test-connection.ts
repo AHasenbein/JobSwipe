@@ -5,7 +5,14 @@
 
 import mongoose from 'mongoose'
 
-const MONGODB_URI = process.env.MONGODB_URI || ''
+const MONGODB_URI = process.env.MONGODB_URI
+
+if (!MONGODB_URI) {
+  console.error('❌ MONGODB_URI environment variable is required')
+  console.error('   Please set MONGODB_URI in your .env.local file or environment')
+  console.error('   Example: MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/database')
+  process.exit(1)
+}
 
 async function testConnection() {
   console.log('🔍 MongoDB Connection Diagnostics\n')
@@ -70,7 +77,13 @@ async function testDNS() {
   const dns = await import('dns').then(m => m.promises)
   
   try {
-    const hostname = 'maincluster.ndr3cps.mongodb.net'
+    // Extract hostname from MongoDB URI
+    const uriMatch = MONGODB_URI.match(/mongodb\+srv:\/\/(?:[^:]+:[^@]+@)?([^/]+)/)
+    if (!uriMatch) {
+      console.log('❌ Could not extract hostname from MONGODB_URI')
+      return false
+    }
+    const hostname = uriMatch[1]
     
     // Try A record (IPv4)
     try {

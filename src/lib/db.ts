@@ -8,8 +8,14 @@ try {
 
 const MONGODB_ENABLED = !!mongoose
 
-// Default connection string - can be overridden with MONGODB_URI env variable
-const MONGODB_URI = process.env.MONGODB_URI || ''
+// MongoDB connection string - must be provided via MONGODB_URI environment variable
+const MONGODB_URI = process.env.MONGODB_URI
+
+if (MONGODB_ENABLED && !MONGODB_URI) {
+  console.warn('[db.ts] MONGODB_URI environment variable is not set. MongoDB features will be disabled.')
+  console.warn('   Please set MONGODB_URI in your .env.local file')
+  console.warn('   Example: MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/database')
+}
 
 interface MongooseCache {
   conn: any | null
@@ -31,6 +37,10 @@ if (!global.mongoose) {
 async function connectDB(): Promise<any> {
   if (!MONGODB_ENABLED) {
     throw new Error('MongoDB is not enabled. Please install mongoose: npm install mongoose')
+  }
+
+  if (!MONGODB_URI) {
+    throw new Error('MONGODB_URI environment variable is required. Please set it in your .env.local file')
   }
 
   if (cached.conn) {
