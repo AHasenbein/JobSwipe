@@ -1,0 +1,52 @@
+import type { Metadata, Viewport } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+import ThemeProvider from '@/components/ThemeProvider'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: 'MeritAI - Fast Startup Hiring',
+  description: 'Screen candidates in minutes, not hours',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'MeritAI',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en" className="h-full" suppressHydrationWarning>
+      <body className={`${inter.className} h-full overscroll-none`} suppressHydrationWarning>
+        <ThemeProvider>
+          <div className="min-h-full supports-[padding:env(safe-area-inset-bottom)]:pb-safe">
+            {children}
+          </div>
+        </ThemeProvider>
+      </body>
+    </html>
+  )
+}

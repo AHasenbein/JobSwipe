@@ -1,0 +1,90 @@
+import { Candidate } from '@/types'
+import connectDB, { MONGODB_ENABLED } from './db'
+import CandidateModel from '@/models/Candidate'
+import { shouldUseMongoDB } from './storageConfig'
+
+/**
+ * Save a candidate to MongoDB (only in production)
+ */
+export async function saveCandidate(candidate: Candidate): Promise<void> {
+  if (!shouldUseMongoDB() || !CandidateModel) {
+    console.log('[candidateStore] Skipping MongoDB save (local dev mode - using localStorage)')
+    return
+  }
+  
+  await connectDB()
+  await CandidateModel.findOneAndUpdate(
+    { id: candidate.id },
+    candidate,
+    { upsert: true, new: true }
+  )
+}
+
+/**
+ * Save multiple candidates to MongoDB (only in production)
+ */
+export async function saveCandidates(candidates: Candidate[]): Promise<void> {
+  if (candidates.length === 0) {
+    console.log('[candidateStore] No candidates to save')
+    return
+  }
+  
+  if (!shouldUseMongoDB() || !CandidateModel) {
+    console.log(`[candidateStore] Skipping MongoDB save for ${candidates.length} candidate(s) (local dev mode - using localStorage)`)
+    return
+  }
+  
+  try {
+    await connectDB()
+    console.log(`[candidateStore] Saving ${candidates.length} candidate(s) to MongoDB...`)
+    
+    // Use bulkWrite for efficiency
+    const operations = candidates.map(candidate => ({
+      updateOne: {
+        filter: { id: candidate.id },
+        update: { $set: candidate },
+        upsert: true
+      }
+    }))
+    
+    const result = await CandidateModel.bulkWrite(operations)
+    console.log(`[candidateStore] ✅ Saved ${result.upsertedCount + result.modifiedCount} candidate(s) (${result.upsertedCount} new, ${result.modifiedCount} updated)`)
+  } catch (error) {
+    console.error('[candidateStore] ❌ Error saving candidates:', error)
+    throw error
+  }
+}
+
+/**
+ * Get candidates by job ID from database
+ */
+export async function getCandidatesByJobId(jobId: string): Promise<Candidate[]> {
+  if (!MONGODB_ENABLED || !CandidateModel) {
+    return []
+  }
+  
+  await connectDB()
+  const docs = await CandidateModel.find({ jobId }).lean()
+  return docs.map((doc: any) => ({
+    ...doc,
+    createdAt: doc.createdAt ? new Date(doc.createdAt) : new Date(),
+    swipedAt: doc.swipedAt ? new Date(doc.swipedAt) : undefined
+  })) as Candidate[]
+}
+
+/**
+ * Get all candidates from database
+ */
+export async function getAllCandidates(): Promise<Candidate[]> {
+  if (!MONGODB_ENABLED || !CandidateModel) {
+    return []
+  }
+  
+  await connectDB()
+  const docs = await CandidateModel.find({}).lean()
+  return docs.map((doc: any) => ({
+    ...doc,
+    createdAt: doc.createdAt ? new Date(doc.createdAt) : new Date(),
+    swipedAt: doc.swipedAt ? new Date(doc.swipedAt) : undefined
+  })) as Candidate[]
+}
