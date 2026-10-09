@@ -35,3 +35,8 @@ yarn-error.log*
 next-env.d.ts
 #ignore
 *.md
+# editor / agent tooling
+.claude/
+.cursor/
+.vscode/
+.idea/
